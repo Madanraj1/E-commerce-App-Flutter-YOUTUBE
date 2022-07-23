@@ -1,6 +1,8 @@
+import 'package:ecommerce_app_youtube/Provider/appProvider.dart';
 import 'package:flutter/material.dart';
 import 'package:otp_text_field/otp_field.dart';
 import 'package:otp_text_field/style.dart';
+import 'package:provider/provider.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({Key? key}) : super(key: key);
@@ -117,6 +119,9 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                         GestureDetector(
                           onTap: () {
+                            var ph = _phoneNumberFieldController!.text;
+                            Provider.of<AppProvider>(context, listen: false).setPhonenumber(ph);
+
                             setState(() {
                               otpSent = true;
                             });
@@ -173,7 +178,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: [
                         Text(
-                          "Enter the OTP sent to this number +911122334455",
+                          "Enter the OTP sent to this number +91${Provider.of<AppProvider>(context).getPhoneNumber}",
                           style: TextStyle(
                             fontSize: _height * 0.017,
                             fontWeight: FontWeight.w600,

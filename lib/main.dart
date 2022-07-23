@@ -1,8 +1,14 @@
+import 'package:ecommerce_app_youtube/Provider/appProvider.dart';
 import 'package:ecommerce_app_youtube/UI/Auth/loginScreen.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 void main() {
-  runApp(const MyApp());
+  runApp(MultiProvider(providers: [
+    ChangeNotifierProvider(create: (_) {
+      return AppProvider();
+    }),
+  ], child: MyApp()));
 }
 
 class MyApp extends StatelessWidget {

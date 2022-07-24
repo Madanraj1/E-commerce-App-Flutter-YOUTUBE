@@ -16,7 +16,8 @@ class _LoginScreenState extends State<LoginScreen> {
   OtpFieldController otpController = OtpFieldController();
 
   FocusNode? _phoneFocusNode;
-  bool otpSent = false;
+  bool showOtpBoxes = false, loader = false;
+  String error = "";
 
   @override
   void initState() {
@@ -24,6 +25,15 @@ class _LoginScreenState extends State<LoginScreen> {
     _phoneFocusNode = FocusNode();
 
     super.initState();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    showOtpBoxes = Provider.of<AppProvider>(context).otpSent;
+    if (showOtpBoxes) {
+      loader = false;
+    }
   }
 
   @override
@@ -53,7 +63,7 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
             SizedBox(height: _height * 0.05),
             // phone number container
-            otpSent == false
+            showOtpBoxes == false
                 ? Container(
                     height: _height * 0.4,
                     width: _width * 0.8,
@@ -80,6 +90,16 @@ class _LoginScreenState extends State<LoginScreen> {
                             fontWeight: FontWeight.w600,
                           ),
                         ),
+                        error == ""
+                            ? SizedBox()
+                            : Text(
+                                "please enter a valid number",
+                                style: TextStyle(
+                                  color: Colors.red,
+                                  fontSize: _height * 0.015,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
                         Container(
                           width: _width * 0.7,
                           height: _height * 0.06,
@@ -94,7 +114,12 @@ class _LoginScreenState extends State<LoginScreen> {
                             focusNode: _phoneFocusNode,
                             controller: _phoneNumberFieldController,
                             keyboardType: TextInputType.phone,
-                            onChanged: (value) {},
+                            onChanged: (value) {
+                              if (value.length > 10) {
+                                error = "Phone number is not valid";
+                                setState(() {});
+                              }
+                            },
                             style: TextStyle(
                               fontSize: 15,
                               color: Colors.black,
@@ -120,11 +145,14 @@ class _LoginScreenState extends State<LoginScreen> {
                         GestureDetector(
                           onTap: () {
                             var ph = _phoneNumberFieldController!.text;
-                            Provider.of<AppProvider>(context, listen: false).setPhonenumber(ph);
-
-                            setState(() {
-                              otpSent = true;
-                            });
+                            if (ph.length == 10) {
+                              Provider.of<AppProvider>(context, listen: false).setPhonenumber(ph);
+                              Provider.of<AppProvider>(context, listen: false).otpAuth(ph, context);
+                              loader = true;
+                              setState(() {});
+                            } else {
+                              error = "Please enter a valid phone number";
+                            }
                           },
                           child: Container(
                             width: _width * 0.35,
@@ -134,24 +162,26 @@ class _LoginScreenState extends State<LoginScreen> {
                               color: Color(0xff3E66FB),
                             ),
                             alignment: Alignment.center,
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              crossAxisAlignment: CrossAxisAlignment.center,
-                              children: [
-                                Text(
-                                  "Continue",
-                                  style: TextStyle(
-                                    fontSize: _height * 0.02,
-                                    fontWeight: FontWeight.w600,
-                                    color: Colors.white,
+                            child: loader
+                                ? Container(height: 20, child: CircularProgressIndicator(color: Colors.white))
+                                : Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    crossAxisAlignment: CrossAxisAlignment.center,
+                                    children: [
+                                      Text(
+                                        "Continue",
+                                        style: TextStyle(
+                                          fontSize: _height * 0.02,
+                                          fontWeight: FontWeight.w600,
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                      Icon(
+                                        Icons.navigate_next_outlined,
+                                        color: Colors.white,
+                                      )
+                                    ],
                                   ),
-                                ),
-                                Icon(
-                                  Icons.navigate_next_outlined,
-                                  color: Colors.white,
-                                )
-                              ],
-                            ),
                           ),
                         ),
                       ],
@@ -195,36 +225,48 @@ class _LoginScreenState extends State<LoginScreen> {
                             outlineBorderRadius: 15,
                             style: TextStyle(fontSize: 17),
                             onChanged: (pin) {
-                              print("Changed: " + pin);
+                              // print("Changed: " + pin);
                             },
                             onCompleted: (pin) {
-                              print("Completed: " + pin);
+                              loader = true;
+                              setState(() {});
+                              Provider.of<AppProvider>(context, listen: false).manualOtpVerification(context, pin);
+
+                              // print("Completed: " + pin);
                             }),
-                        Container(
-                          width: _width * 0.35,
-                          height: _height * 0.05,
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(10),
-                            color: Color(0xff3E66FB),
-                          ),
-                          alignment: Alignment.center,
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: [
-                              Text(
-                                "Resend Otp",
-                                style: TextStyle(
-                                  fontSize: _height * 0.02,
-                                  fontWeight: FontWeight.w600,
-                                  color: Colors.white,
+                        GestureDetector(
+                          onTap: () {
+                            loader = false;
+                            showOtpBoxes = false;
+                            Provider.of<AppProvider>(context, listen: false).otpSent = false;
+                            setState(() {});
+                          },
+                          child: Container(
+                            width: _width * 0.35,
+                            height: _height * 0.05,
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(10),
+                              color: Color(0xff3E66FB),
+                            ),
+                            alignment: Alignment.center,
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                Text(
+                                  "Try Again",
+                                  style: TextStyle(
+                                    fontSize: _height * 0.02,
+                                    fontWeight: FontWeight.w600,
+                                    color: Colors.white,
+                                  ),
                                 ),
-                              ),
-                              Icon(
-                                Icons.sms,
-                                color: Colors.white,
-                              )
-                            ],
+                                Icon(
+                                  Icons.emergency,
+                                  color: Colors.white,
+                                )
+                              ],
+                            ),
                           ),
                         ),
                       ],
